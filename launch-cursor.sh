@@ -10,10 +10,12 @@ while true; do
   echo "========================================"
   
   profiles=()
-  count=1
+  count=0
   
-  echo "0) Launch Personal Account (Default)"
+  echo "p) Launch Personal Account (Default)"
+  echo "----------------------------------------"
   
+  # Scan and index sandboxed profiles
   while IFS= read -r dir; do
     if [ -d "$dir" ]; then
       profile_name=$(basename "$dir" | sed 's/Cursor-//')
@@ -37,7 +39,7 @@ while true; do
       echo "Exiting."
       exit 0
       ;;
-    0)
+    p)
       echo "Launching Default Personal Profile..."
       "$DEFAULT_APP" & disown
       exit 0
@@ -61,8 +63,8 @@ while true; do
       ;;
     r)
       read -p "Enter number of the profile to rename: " num
-      if [[ "$num" -gt 0 && "$num" -le "${#profiles[@]}" ]]; then
-        old_name="${profiles[\$((num-1))]}"
+      if [[ "$num" =~ ^[0-9]+$ ]] && [[ "$num" -ge 0 && "$num" -lt "${#profiles[@]}" ]]; then
+        old_name="${profiles[num]}"
         read -p "Enter NEW name for [$old_name]: " new_name
         new_name=$(echo "$new_name" | tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]')
         if [ -n "$new_name" ]; then
@@ -71,13 +73,13 @@ while true; do
           sleep 1
         fi
       else
-        echo "Invalid choice. Press enter."; read
+        echo "Invalid choice. Must be a valid number. Press enter."; read
       fi
       ;;
     d)
       read -p "Enter number of the profile to DELETE: " num
-      if [[ "$num" -gt 0 && "$num" -le "${#profiles[@]}" ]]; then
-        target_name="${profiles[\$((num-1))]}"
+      if [[ "$num" =~ ^[0-9]+$ ]] && [[ "$num" -ge 0 && "$num" -lt "${#profiles[@]}" ]]; then
+        target_name="${profiles[num]}"
         read -p "Are you sure you want to completely erase [$target_name]? (y/n): " confirm
         if [ "$confirm" = "y" ]; then
           rm -rf "$BASE_DIR/Cursor-$target_name"
@@ -85,12 +87,12 @@ while true; do
           sleep 1
         fi
       else
-        echo "Invalid choice. Press enter."; read
+        echo "Invalid choice. Must be a valid number. Press enter."; read
       fi
       ;;
     *)
-      if [[ "$choice" -gt 0 && "$choice" -le "${#profiles[@]}" ]]; then
-        target_name="${profiles[\$((choice-1))]}"
+      if [[ "$choice" =~ ^[0-9]+$ ]] && [[ "$choice" -ge 0 && "$choice" -lt "${#profiles[@]}" ]]; then
+        target_name="${profiles[choice]}"
         echo "Launching Profile: [$target_name]..."
         "$DEFAULT_APP" --user-data-dir="$BASE_DIR/Cursor-$target_name" & disown
         exit 0

@@ -1,0 +1,102 @@
+#!/bin/bash
+
+BASE_DIR="$HOME/Library/Application Support"
+DEFAULT_APP="/Applications/Cursor.app/Contents/MacOS/Cursor"
+
+while true; do
+  clear
+  echo "========================================"
+  echo "      CURSOR ALL-IN-ONE ENGINE          "
+  echo "========================================"
+  
+  profiles=()
+  count=1
+  
+  echo "0) Launch Personal Account (Default)"
+  
+  while IFS= read -r dir; do
+    if [ -d "$dir" ]; then
+      profile_name=$(basename "$dir" | sed 's/Cursor-//')
+      profiles+=("$profile_name")
+      echo "$count) Launch Profile: [$profile_name]"
+      ((count++))
+    fi
+  done < <(find "$BASE_DIR" -maxdepth 1 -name "Cursor-*" -type d 2>/dev/null)
+  
+  echo "========================================"
+  echo "c) Create New Profile"
+  echo "r) Rename a Profile"
+  echo "d) Delete a Profile"
+  echo "q) Quit"
+  echo "========================================"
+  
+  read -p "Choose an action: " choice
+
+  case $choice in
+    q)
+      echo "Exiting."
+      exit 0
+      ;;
+    0)
+      echo "Launching Default Personal Profile..."
+      "$DEFAULT_APP" & disown
+      exit 0
+      ;;
+    c)
+      read -p "Enter unique name for new profile: " new_name
+      new_name=$(echo "$new_name" | tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]')
+      if [ -z "$new_name" ]; then
+        echo "Invalid name. Press enter to retry."; read
+        continue
+      fi
+      NEW_PATH="$BASE_DIR/Cursor-$new_name"
+      if [ -d "$NEW_PATH" ]; then
+        echo "Profile already exists! Press enter."; read
+      else
+        mkdir -p "$NEW_PATH/User"
+        [ -f "$BASE_DIR/Cursor/User/settings.json" ] && cp "$BASE_DIR/Cursor/User/settings.json" "$NEW_PATH/User/settings.json"
+        echo "Profile [$new_name] created."
+        sleep 1.5
+      fi
+      ;;
+    r)
+      read -p "Enter number of the profile to rename: " num
+      if [[ "$num" -gt 0 && "$num" -le "${#profiles[@]}" ]]; then
+        old_name="${profiles[\$((num-1))]}"
+        read -p "Enter NEW name for [$old_name]: " new_name
+        new_name=$(echo "$new_name" | tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]')
+        if [ -n "$new_name" ]; then
+          mv "$BASE_DIR/Cursor-$old_name" "$BASE_DIR/Cursor-$new_name"
+          echo "Renamed successfully."
+          sleep 1
+        fi
+      else
+        echo "Invalid choice. Press enter."; read
+      fi
+      ;;
+    d)
+      read -p "Enter number of the profile to DELETE: " num
+      if [[ "$num" -gt 0 && "$num" -le "${#profiles[@]}" ]]; then
+        target_name="${profiles[\$((num-1))]}"
+        read -p "Are you sure you want to completely erase [$target_name]? (y/n): " confirm
+        if [ "$confirm" = "y" ]; then
+          rm -rf "$BASE_DIR/Cursor-$target_name"
+          echo "Profile deleted."
+          sleep 1
+        fi
+      else
+        echo "Invalid choice. Press enter."; read
+      fi
+      ;;
+    *)
+      if [[ "$choice" -gt 0 && "$choice" -le "${#profiles[@]}" ]]; then
+        target_name="${profiles[\$((choice-1))]}"
+        echo "Launching Profile: [$target_name]..."
+        "$DEFAULT_APP" --user-data-dir="$BASE_DIR/Cursor-$target_name" & disown
+        exit 0
+      else
+        echo "Invalid selection. Press enter."; read
+      fi
+      ;;
+  esac
+done

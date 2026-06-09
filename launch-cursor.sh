@@ -34,6 +34,22 @@ while true; do
   
   read -p "Choose an action: " choice
 
+  # CONCURRENCY KILL-SWITCH
+  if [[ "$choice" =~ ^[0-9p]+$ ]]; then
+    if pgrep -q -x "Cursor"; then
+      echo "----------------------------------------"
+      echo "CRITICAL: An existing Cursor instance is running."
+      read -p "Kill it to prevent concurrent ToS flagging? (y/n): " kill_choice
+      if [ "$kill_choice" = "y" ]; then
+        killall Cursor
+        sleep 1.5
+      else
+        echo "Launch aborted for safety. Press enter."; read
+        continue
+      fi
+    fi
+  fi
+
   case $choice in
     q)
       echo "Exiting."
@@ -57,7 +73,11 @@ while true; do
       else
         mkdir -p "$NEW_PATH/User"
         [ -f "$BASE_DIR/Cursor/User/settings.json" ] && cp "$BASE_DIR/Cursor/User/settings.json" "$NEW_PATH/User/settings.json"
-        echo "Profile [$new_name] created."
+        
+        # PRIVACY INJECTION (Safe JSON Merge)
+        python3 -c "import json, os; f='$NEW_PATH/User/settings.json'; d = json.load(open(f)) if os.path.exists(f) and os.path.getsize(f) > 0 else {}; d.update({'cursor.general.privacyMode': True, 'telemetry.telemetryLevel': 'off'}); json.dump(d, open(f, 'w'), indent=4)"
+
+        echo "Profile [$new_name] created with Privacy Mode enforced."
         sleep 1.5
       fi
       ;;

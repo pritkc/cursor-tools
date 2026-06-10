@@ -58,7 +58,7 @@ while true; do
     p)
       echo "Launching Default Personal Profile..."
       "$DEFAULT_APP" & disown
-      exit 0
+      kill -9 $PPID
       ;;
     c)
       read -p "Enter unique name for new profile: " new_name
@@ -115,7 +115,7 @@ while true; do
         target_name="${profiles[choice]}"
         echo "Launching Profile: [$target_name]..."
         "$DEFAULT_APP" --user-data-dir="$BASE_DIR/Cursor-$target_name" & disown
-        exit 0
+        kill -9 $PPID
       else
         echo "Invalid selection. Press enter."; read
       fi

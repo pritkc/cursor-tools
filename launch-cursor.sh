@@ -1,7 +1,6 @@
 #!/bin/bash
 
 BASE_DIR="$HOME/Library/Application Support"
-DEFAULT_APP="/Applications/Cursor.app/Contents/MacOS/Cursor"
 
 while true; do
   clear
@@ -57,8 +56,9 @@ while true; do
       ;;
     p)
       echo "Launching Default Personal Profile..."
-      "$DEFAULT_APP" & disown
+      open -n -a "Cursor"
       kill -9 $PPID
+      exit 0
       ;;
     c)
       read -p "Enter unique name for new profile: " new_name
@@ -74,7 +74,7 @@ while true; do
         mkdir -p "$NEW_PATH/User"
         [ -f "$BASE_DIR/Cursor/User/settings.json" ] && cp "$BASE_DIR/Cursor/User/settings.json" "$NEW_PATH/User/settings.json"
         
-        # PRIVACY INJECTION (Safe JSON Merge)
+        # PRIVACY INJECTION
         python3 -c "import json, os; f='$NEW_PATH/User/settings.json'; d = json.load(open(f)) if os.path.exists(f) and os.path.getsize(f) > 0 else {}; d.update({'cursor.general.privacyMode': True, 'telemetry.telemetryLevel': 'off'}); json.dump(d, open(f, 'w'), indent=4)"
 
         echo "Profile [$new_name] created with Privacy Mode enforced."
@@ -93,7 +93,7 @@ while true; do
           sleep 1
         fi
       else
-        echo "Invalid choice. Must be a valid number. Press enter."; read
+        echo "Invalid choice. Press enter."; read
       fi
       ;;
     d)
@@ -107,15 +107,16 @@ while true; do
           sleep 1
         fi
       else
-        echo "Invalid choice. Must be a valid number. Press enter."; read
+        echo "Invalid choice. Press enter."; read
       fi
       ;;
     *)
       if [[ "$choice" =~ ^[0-9]+$ ]] && [[ "$choice" -ge 0 && "$choice" -lt "${#profiles[@]}" ]]; then
         target_name="${profiles[choice]}"
         echo "Launching Profile: [$target_name]..."
-        "$DEFAULT_APP" --user-data-dir="$BASE_DIR/Cursor-$target_name" & disown
+        open -n -a "Cursor" --args --user-data-dir="$BASE_DIR/Cursor-$target_name"
         kill -9 $PPID
+        exit 0
       else
         echo "Invalid selection. Press enter."; read
       fi
